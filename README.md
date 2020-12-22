@@ -13,3 +13,10 @@ Testing the project:
 
 Building the project:
 * `go build -o app`
+
+Build the docker image
+* `docker build -t go-dummy .`
+
+Run the docker container (port mappings... host:container)
+* `docker run -p 8081:8080 -it go-dummy`
+* http server listens on `localhost:8081`
