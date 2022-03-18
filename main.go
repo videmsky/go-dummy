@@ -19,7 +19,7 @@ func main() {
 	)
     defer otelLauncher.Shutdown()
 
-	wrappedHandler := otelhttp.NewHandler(http.HandlerFunc(helloHandler), "/hello")
+	wrappedHandler := otelhttp.NewHandler(http.HandlerFunc(helloHandler), "/")
 	http.Handle("/", wrappedHandler)
 	http.ListenAndServe(":8080", nil)
 }
