@@ -1,34 +1,35 @@
 package main
 
 import (
-	"fmt"
+	"os"
+	"time"
 	"net/http"
+	"github.com/lightstep/otel-launcher-go/launcher"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func helloworld() string {
-	return "Hello World!!"
-}
+var tracer trace.Tracer
 
-func healthcheck() string {
-	return "Health OK!"
-}
-
-func livenesscheck() string {
-	return "I am alive!!!"
-}
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, helloworld())
-	})
+    otelLauncher := launcher.ConfigureOpentelemetry(
+		launcher.WithServiceName("laci-lightstep"),
+		launcher.WithAccessToken(os.Getenv("LS_ACCESS_TOKEN")),
+	)
+    defer otelLauncher.Shutdown()
 
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, healthcheck())
-	})
-
-	http.HandleFunc("/liveness", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, livenesscheck())
-	})
-
+	wrappedHandler := otelhttp.NewHandler(http.HandlerFunc(helloHandler), "/hello")
+	http.Handle("/", wrappedHandler)
 	http.ListenAndServe(":8080", nil)
+}
+
+// Example HTTP Handler
+func helloHandler(w http.ResponseWriter, req *http.Request) {
+	cxt := req.Context()
+	span := trace.SpanFromContext(cxt)
+	defer span.End()
+	
+	time.Sleep(time.Second)
+	w.Write([]byte("Hello Lightstep!!!"))
 }
